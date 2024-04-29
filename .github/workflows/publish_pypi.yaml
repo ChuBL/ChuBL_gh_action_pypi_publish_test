@@ -1,42 +1,42 @@
-name: Upload Python Package
+# name: Upload Python Package
 
-on:
-  release:
-    types: [published, created, released]
+# on:
+#   release:
+#     types: [published, created, released]
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
 
-      - name: Install jq for JSON parsing
-        run: sudo apt-get install jq
+#       - name: Install jq for JSON parsing
+#         run: sudo apt-get install jq
 
-      - name: Create dist directory
-        run: mkdir -p dist
+#       - name: Create dist directory
+#         run: mkdir -p dist
 
-      - name: Download Release Assets
-        run: |
-          # Get release data
-          RELEASE_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}")
+#       - name: Download Release Assets
+#         run: |
+#           # Get release data
+#           RELEASE_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+#             -H "Accept: application/vnd.github.v3+json" \
+#             "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}")
 
-          # Loop through assets and download .whl and .tar.gz files
-          echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | endswith(".whl") or endswith(".tar.gz")) | .url' | while read -r ASSET_URL; do
-            curl -sL -o "dist/$(basename "$ASSET_URL")" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/octet-stream" "$ASSET_URL"
-          done
+#           # Loop through assets and download .whl and .tar.gz files
+#           echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | endswith(".whl") or endswith(".tar.gz")) | .url' | while read -r ASSET_URL; do
+#             curl -sL -o "dist/$(basename "$ASSET_URL")" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+#               -H "Accept: application/octet-stream" "$ASSET_URL"
+#           done
 
-      - name: List contents of dist directory
-        run: ls -l dist/
+#       - name: List contents of dist directory
+#         run: ls -l dist/
 
-      - name: Publish package to PyPI
-        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
+#       - name: Publish package to PyPI
+#         uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+#         with:
+#           user: __token__
+#           password: ${{ secrets.PYPI_API_TOKEN }}

@@ -1,0 +1,90 @@
+# name: Build and Release
+
+# on:
+#   push:
+#     tags:
+#       - 'v*'
+
+# permissions:
+#   contents: write
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+
+#       - name: Build package
+#         run: |
+#           python setup.py sdist bdist_wheel
+          
+#       - name: Extract tag name
+#         id: get_tag
+#         run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+#       - name: Create Release
+#         uses: softprops/action-gh-release@v1
+#         with:
+#           files: dist/*
+#           name: ${{ env.TAG_NAME }}
+#           tag_name: ${{ env.TAG_NAME }}
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+name: Build, Release, and Upload Python Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build package
+        run: |
+          python setup.py sdist bdist_wheel
+
+      - name: Extract tag name
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          name: ${{ env.TAG_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install jq for JSON parsing
+        run: sudo apt-get install jq
+
+      - name: Download Release Assets
+        run: |
+          # Get release data
+          RELEASE_DATA=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.TAG_NAME }}")
+
+          # Loop through assets and download .whl and .tar.gz files
+          echo "$RELEASE_DATA" | jq -r '.assets[] | select(.name | endswith(".whl") or endswith(".tar.gz")) | .url' | while read -r ASSET_URL; do
+            curl -sL -o "dist/$(basename "$ASSET_URL")" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/octet-stream" "$ASSET_URL"
+          done
+
+      - name: List contents of dist directory
+        run: ls -l dist/
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
