@@ -9,12 +9,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout
+      - uses: actions/checkout@v2
       - name: Build package
         run: |
           python setup.py sdist bdist_wheel
       - name: Create Release
-        uses: softprops/action-gh-release
+        uses: softprops/action-gh-release@v1
         with:
           files: dist/*
         env:
