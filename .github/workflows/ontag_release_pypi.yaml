@@ -63,6 +63,9 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Clear dist directory
+        run: rm -rf dist/*  # This command clears the dist directory
 
       - name: Install jq for JSON parsing
         run: sudo apt-get install jq
