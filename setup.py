@@ -9,4 +9,6 @@ setup(
     author_email="your.email@example.com",
     description="A simple example package",
     keywords="example",
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown'
 )
